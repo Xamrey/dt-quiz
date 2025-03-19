@@ -11,10 +11,10 @@ class Stage: # Allows me to reference what menu is being used easier
     PracticeLED = "__STAGE-PRACTICE-LED__"
 Stage = Stage() # Removing the need to create a copy of the class every time it is used
 
-class UiItem:
-    def __init__(self, zIndex, path, selectable): # zIndex should be between 0 and 5
+class Asset:
+    def __init__(self, zIndex, asset, selectable): # zIndex should be between 0 and 5
         self.zIndex = zIndex
-        self.image = pygame.image.load(path).convert_alpha()
+        self.asset = asset
         self.selectable = selectable
 
 assets = []
@@ -49,8 +49,8 @@ except Exception as err:
 
 pygame.init()
 pygame.font.init()
-font = pygame.font.SysFont("Arial" ,12)
-text = font.render("sample text", True, (0, 0, 0))
+font = pygame.font.SysFont("Arial" ,24)
+assets.append(Asset(0, font.render("sample text", True, (0, 0, 0)), False))
 wn = pygame.display.set_mode((500, 500)) # change later
 
 run = True
@@ -64,7 +64,8 @@ while run:
                 data.close()
 
     wn.fill((255, 255, 255))
-    text.blit(wn, (0, 0))
+    wn.blit(assets[0].asset, (0, 0))
+    print(assets[0].asset)
     pygame.display.flip()
 
 pygame.quit()
