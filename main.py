@@ -70,6 +70,7 @@ except Exception as err:
     createNotif("There was an error in loading your data, any progress you make will not be saved (error code has been printed to the console)")
 
 def run(): # Putting the loop in a function allows it to be broken out of instantly
+    global stage, assets
     while True:
         for i in pygame.event.get(): # Input
             if i.type == pygame.QUIT:
@@ -97,7 +98,6 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
                             print("submit answer")
                         elif i.key == 8:
                             print("remove number from answer")
-
         assets[0].pos = ((assets[0].pos[0] + 0.1) % 500, (assets[0].pos[1] + 0.05) % 500)
         # Rendering assets
         wn.fill((255, 255, 255))
