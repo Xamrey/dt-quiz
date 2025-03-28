@@ -87,7 +87,7 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
                             if i.stageChange:
                                 stage = i.stageChange
                                 assets = stageAssets[i.stageChange]
-                            elif stage == Stage.PracticeBands or stage == Stage.PracticeLED: # Only selectable assets that don't change the stage will submit answers
+                            elif stage == Stage.PracticeBands or stage == Stage.PracticeLED: # All selectable assets that don't change the stage will submit answers
                                 print("submit answer")
             elif i.type == pygame.KEYDOWN:
                 if stage == Stage.PracticeBands or stage == Stage.PracticeLED:
