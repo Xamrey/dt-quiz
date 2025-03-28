@@ -30,10 +30,11 @@ stage = Stage.MenuMain
 
 stageAssets = {
     Stage.MenuMain : [
-        Asset(0, font.render("sample text", True, (0, 0, 0)), (0, 0), False)
+        Asset(0, font.render("sample text", True, (0, 0, 0)), (0, 0), False),
+        Asset(1, pygame.image.load("assets/menus/startbtn.png").convert_alpha(), (125, 300), True, Stage.MenuLearn)
     ],
     Stage.MenuLearn : [
-
+        Asset(0, font.render("EVIL sample text", True, (0, 0, 0)), (0, 0), False)
     ]
 }
 assets = stageAssets[stage]
@@ -70,7 +71,7 @@ except Exception as err:
     createNotif("There was an error in loading your data, any progress you make will not be saved (error code has been printed to the console)")
 
 def run(): # Putting the loop in a function allows it to be broken out of instantly
-    global stage, assets
+    global stage, assets # Removes errors with global vs local variables
     while True:
         for i in pygame.event.get(): # Input
             if i.type == pygame.QUIT:
@@ -98,11 +99,13 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
                             print("submit answer")
                         elif i.key == 8:
                             print("remove number from answer")
-        assets[0].pos = ((assets[0].pos[0] + 0.1) % 500, (assets[0].pos[1] + 0.05) % 500)
         # Rendering assets
         wn.fill((255, 255, 255))
-        renderList = {0:[],1:[],2:[],3:[],4:[],5:[]}
+        renderList = {0:[],1:[],2:[],3:[],4:[],5:[]} # zIndex functionality
+        cursor = pygame.SYSTEM_CURSOR_ARROW
         for i in assets:
+            if i.selectable and checkSelected(i): # Checking if a selectable button is being hovered over
+                cursor = pygame.SYSTEM_CURSOR_HAND
             renderList[i.zIndex].append(i)
             if i.notifTimer:
                 i.notifTimer -= 1
@@ -111,6 +114,8 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
         for i in renderList.values():
             for v in i:
                 wn.blit(v.instance, v.pos)
+        if pygame.mouse.get_cursor() != cursor:
+            pygame.mouse.set_cursor(cursor)
         pygame.display.flip()
 
 run()
