@@ -13,16 +13,17 @@ class Stage: # Allows me to reference what menu is being used easier
 Stage = Stage() # Removing the need to create a copy of the class every time it is used
 
 class Asset:
-    def __init__(self, zIndex, instance, pos, selectable, stageChange=None, notifTimer=None): # zIndex should be between 0 and 5
-        self.zIndex = zIndex
+    def __init__(self, zIndex, instance, pos, selectable, stageChange=None, notifTimer=None):
+        self.zIndex = zIndex # Should be between 0 and 5
         self.instance = instance
         self.pos = pos
         self.selectable = selectable
         self.stageChange = stageChange
-        self.notifTimer = notifTimer
+        self.notifTimer = notifTimer * 24 if notifTimer else None # Length of time that the notification stays on screen, in seconds (multipled by framerate)
 
 # Setting up pygame and variables
 pygame.init()
+clock = pygame.time.Clock()
 pygame.font.init()
 font = pygame.font.SysFont("Arial" ,24) # rename and change later (for various different text objects)
 wn = pygame.display.set_mode((500, 500)) # change later
@@ -31,10 +32,25 @@ stage = Stage.MenuMain
 stageAssets = {
     Stage.MenuMain : [
         Asset(0, font.render("sample text", True, (0, 0, 0)), (0, 0), False),
-        Asset(1, pygame.image.load("assets/menus/startbtn.png").convert_alpha(), (125, 300), True, Stage.MenuLearn)
+        Asset(0, pygame.image.load("assets/menus/startbtn.png").convert_alpha(), (125, 300), True, Stage.MenuLearn)
     ],
     Stage.MenuLearn : [
         Asset(0, font.render("EVIL sample text", True, (0, 0, 0)), (0, 0), False)
+    ],
+    Stage.LearnBANDS : [
+
+    ],
+    Stage.LearnLED : [
+
+    ],
+    Stage.MenuPractice : [
+
+    ],
+    Stage.PracticeBands : [
+
+    ],
+    Stage.PracticeLED : [
+
     ]
 }
 assets = stageAssets[stage]
@@ -46,7 +62,8 @@ def checkSelected(asset):
     return rect.collidepoint(pygame.mouse.get_pos())
 
 def createNotif(message):
-    print("change later", message)
+    assets.append(Asset(4, pygame.image.load("assets/menus/notifbg.png"), (0, 0), False, notifTimer=5)) # change time later?
+    assets.append(Asset(5, font.render(message, True, (0, 0, 0)), (0, 0), False, notifTimer=5))
 
 practiceData = { # Default data
     "BANDS": {
@@ -113,10 +130,12 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
                     assets.remove(i)
         for i in renderList.values():
             for v in i:
-                wn.blit(v.instance, v.pos)
+                if v in assets: # Stops strange bug with removing notification objects
+                    wn.blit(v.instance, v.pos)
         if pygame.mouse.get_cursor() != cursor:
             pygame.mouse.set_cursor(cursor)
         pygame.display.flip()
+        clock.tick(24) # Caps FPS at 24 so that timers can work correctly
 
 run()
 pygame.quit()
