@@ -5,7 +5,7 @@ import random
 class Stage: # Allows me to reference what menu is being used easier
     MenuMain = "__STAGE-MENU-MAIN__"
     MenuLearn = "__STAGE-MENU-LEARN__"
-    LearnBANDS = "__STAGE-LEARN-BANDS__"
+    LearnBands = "__STAGE-LEARN-BANDS__"
     LearnLED = "__STAGE-LEARN_LED__"
     MenuPractice = "__STAGE-MENU-PRACTICE__"
     PracticeBands = "__STAGE-PRACTICE-BANDS__"
@@ -39,33 +39,33 @@ stageAssets = {
     ],
     Stage.MenuLearn : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
-        Asset(0, pygame.image.load("assets/menus/learntxt.png").convert_alpha(), (0, 0), False),
-        Asset(1, pygame.image.load("assets/menus/bandsbtn.png").convert_alpha(), (160, 250), True, Stage.LearnBANDS),
+        Asset(1, pygame.image.load("assets/menus/learntxt.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/menus/bandsbtn.png").convert_alpha(), (160, 250), True, Stage.LearnBands),
         Asset(1, pygame.image.load("assets/menus/ledbtn.png").convert_alpha(), (160, 390), True, Stage.LearnLED),
-        Asset(1, pygame.image.load("assets/menus/backbtn.png").convert_alpha(), (160, 530), True, Stage.MenuMain)
+        Asset(1, pygame.image.load("assets/menus/menubackbtn.png").convert_alpha(), (160, 530), True, Stage.MenuMain)
     ],
-    Stage.LearnBANDS : [
+    Stage.LearnBands : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
-        Asset(1, pygame.image.load("assets/menus/backbtn.png").convert_alpha(), (160, 600), True, Stage.MenuLearn)
+        Asset(1, pygame.image.load("assets/menus/lpbackbtn.png").convert_alpha(), (160, 600), True, Stage.MenuLearn)
     ],
     Stage.LearnLED : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
-        Asset(1, pygame.image.load("assets/menus/backbtn.png").convert_alpha(), (160, 600), True, Stage.MenuLearn)
+        Asset(1, pygame.image.load("assets/menus/lpbackbtn.png").convert_alpha(), (160, 600), True, Stage.MenuLearn)
     ],
     Stage.MenuPractice : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
-        Asset(0, pygame.image.load("assets/menus/practicetxt.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/menus/practicetxt.png").convert_alpha(), (0, 0), False),
         Asset(1, pygame.image.load("assets/menus/bandsbtn.png").convert_alpha(), (160, 250), True, Stage.PracticeBands),
         Asset(1, pygame.image.load("assets/menus/ledbtn.png").convert_alpha(), (160, 390), True, Stage.PracticeLED),
-        Asset(1, pygame.image.load("assets/menus/backbtn.png").convert_alpha(), (160, 530), True, Stage.MenuMain)
+        Asset(1, pygame.image.load("assets/menus/menubackbtn.png").convert_alpha(), (160, 530), True, Stage.MenuMain)
     ],
     Stage.PracticeBands : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
-        Asset(1, pygame.image.load("assets/menus/backbtn.png").convert_alpha(), (160, 600), True, Stage.MenuPractice)
+        Asset(1, pygame.image.load("assets/menus/lpbackbtn.png").convert_alpha(), (160, 600), True, Stage.MenuPractice)
     ],
     Stage.PracticeLED : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
-        Asset(1, pygame.image.load("assets/menus/backbtn.png").convert_alpha(), (160, 600), True, Stage.MenuPractice)
+        Asset(1, pygame.image.load("assets/menus/lpbackbtn.png").convert_alpha(), (160, 600), True, Stage.MenuPractice)
     ],
     Stage.Quit : []
 }
@@ -87,10 +87,11 @@ def createNotif(message, time):
 
 def generatePractice(type): # Generates practice questions
     if type == Stage.PracticeBands: # Output format: (Question, Assets, Answer)
+        B_n = random.randint(0, 1) # Randomised between 4 and 5 band resistors (0 = 4, 1 = 5)
         B_1 = random.randint(0, 9)
         B_2 = random.randint(0, 9)
-        B_3 = random.randint(0, 9)
-        B_4 = random.randint(0, 9) if random.randint(0, 1) == 1 else 10 # Randomised between 4 and 5 band resistors
+        B_3 = random.randint(0, 9) if B_n == 1 else random.randint(0, 4)
+        B_4 = random.randint(0, 4) if random.randint(0, 1) == 1 else 10
         return (
             "What is the resistance of this resistor, in Ohms? (Ignoring tolerance)",
             [
@@ -99,7 +100,7 @@ def generatePractice(type): # Generates practice questions
                 Asset(3, pygame.image.load(f"assets/generate/band{str(B_3)}.png").convert_alpha(), (0, 0), False),
                 Asset(3, pygame.image.load(f"assets/generate/band{str(B_4)}.png").convert_alpha(), (0, 0), False)
             ], # change zindex / pos later
-            int(str(B_1) + str(B_2)) * (pow(10, B_3)) if B_4 == 10 else int(str(B_1) + str(B_2) + str(B_3)) * (pow(10, B_4)) # Colour no. to multiplayer equation is 10^n
+            int(str(B_1) + str(B_2)) * (pow(10, B_3)) if B_n == 0 else int(str(B_1) + str(B_2) + str(B_3)) * (pow(10, B_4)) # Colour no. to multiplayer equation is 10^n
         )
     elif type == Stage.PracticeLED: # Output format: (Question, Answer)
         V_s = [3, 5, 9, 12][random.randint(0, 3)]
@@ -109,7 +110,7 @@ def generatePractice(type): # Generates practice questions
             f"What is the minimum required resistance for an LED with {V_f}V of forward voltage and {I_f}A of forward current in a circuit with {V_s}V supplied, in Ohms?",
             (V_s - V_f) / I_f
         )
-
+print(generatePractice(Stage.PracticeBands))
 practiceData = { # Default data
     "BANDS": {
         "CORRECT": 0,
