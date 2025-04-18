@@ -26,7 +26,9 @@ class Asset:
 pygame.init()
 clock = pygame.time.Clock()
 pygame.font.init()
-font = pygame.font.SysFont("Arial", 24) # rename and change later (for various different text objects)
+notifText = pygame.font.SysFont("Arial", 40)
+questionText = pygame.font.SysFont("Arial", 30)
+answerText = pygame.font.SysFont("Arial", 35)
 wn = pygame.display.set_mode((720, 720))
 stage = Stage.MenuMain
 inputted = ""
@@ -91,8 +93,8 @@ def createNotif(message, time):
     assets.append(Asset(4, pygame.image.load("assets/menus/notifbg.png").convert_alpha(), (0, 0), False, notifTimer=time))
     n = 0
     for i in message.split("\n"):
-        assets.append(Asset(5, font.render(i, True, (0, 0, 0)), (0, 0), False, notifTimer=time)) # Position variable is a placeholder due to it being changed in the next line
-        assets[-1].pos = (225 - assets[-1].instance.get_rect().size[0] / 2, 50 - assets[-1].instance.get_rect().size[1] * len(message.split("\n")) / 2 + assets[-1].instance.get_rect().size[1] * n) # change if screen width / notifbg width changes
+        assets.append(Asset(5, notifText.render(i, True, (255, 255, 255)), (0, 0), False, notifTimer=time)) # Position variable is a placeholder due to it being changed in the next line
+        assets[-1].pos = (360 - assets[-1].instance.get_rect().size[0] / 2, 100 - assets[-1].instance.get_rect().size[1] * len(message.split("\n")) / 2 + assets[-1].instance.get_rect().size[1] * n)
         n += 1
 
 def generatePractice(type): # Generates practice questions
@@ -101,9 +103,9 @@ def generatePractice(type): # Generates practice questions
         B_1 = random.randint(0, 9)
         B_2 = random.randint(0, 9)
         B_3 = random.randint(0, 9) if B_n == 1 else random.randint(0, 4)
-        B_4 = random.randint(0, 4) if random.randint(0, 1) == 1 else 10
+        B_4 = random.randint(0, 4) if B_n == 1 else 10
         return (
-            "What is the resistance of this resistor, in Ohms? (Ignoring tolerance)",
+            "What is the resistance of this resistor, in Ohms?",
             [
                 Asset(3, pygame.image.load(f"assets/generate/band{str(B_1)}.png").convert_alpha(), (230, 180), False),
                 Asset(3, pygame.image.load(f"assets/generate/band{str(B_2)}.png").convert_alpha(), (280, 180), False),
@@ -117,9 +119,33 @@ def generatePractice(type): # Generates practice questions
         V_f = [1, 1.5, 2, 2.5][random.randint(0, 3)]
         I_f = [0.01, 0.02, 0.03][random.randint(0, 2)]
         return (
-            f"What is the minimum required resistance for an LED with {V_f}V of forward voltage and {I_f}A of forward current in a circuit with {V_s}V supplied, in Ohms?",
-            (V_s - V_f) / I_f
+            f"What is the minimum required resistance for an LED\nwith {V_f}V of forward voltage and {I_f}A of forward\ncurrent in a circuit with {V_s}V supplied, in Ohms?",
+            int((V_s - V_f) / I_f)
         )
+
+def newQuestion():
+    global answer
+    toRemove = []
+    for i in assets:
+        if i.zIndex == 2 or i.zIndex == 3:
+            toRemove.append(i)
+    for i in toRemove:
+        assets.remove(i)
+    if stage == Stage.PracticeBands:
+        generate = generatePractice(stage)
+        assets.append(Asset(3, questionText.render(generate[0], True, (0, 0, 0)), (0, 0), False))
+        assets[-1].pos = (360 - assets[-1].instance.get_rect().size[0] / 2, 100 - assets[-1].instance.get_rect().size[1] / 2)
+        for i in generate[1]:
+            assets.append(i)
+        answer = generate[2]
+    elif stage == Stage.PracticeLED:
+        generate = generatePractice(stage)
+        n = 0
+        for i in generate[0].split("\n"):
+            assets.append(Asset(3, questionText.render(i, True, (0, 0, 0)), (0, 0), False))
+            assets[-1].pos = (360 - assets[-1].instance.get_rect().size[0] / 2, 205 - assets[-1].instance.get_rect().size[1] * len(generate[0].split("\n")) / 2 + assets[-1].instance.get_rect().size[1] * n) # change if screen width / notifbg width changes
+            n += 1
+        answer = generate[1]
 
 practiceData = { # Default data
     "BANDS": {
@@ -141,7 +167,7 @@ try:
 except Exception as err:
     saveData = False
     print(f"Error Code: '{err}'")
-    createNotif("There was an error in loading your data,\nany progress you make will not be saved\n(error code has been printed to the console)")
+    createNotif("There was an error in loading your data,\nany progress you make will not be saved\n(error code has been printed to the console)", 5)
 
 def run(): # Putting the loop in a function allows it to be broken out of instantly
     global stage, assets, inputted, answer # Removes errors with global vs local variables
@@ -167,28 +193,41 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
                                 stage = i.stageChange
                                 assets = stageAssets[i.stageChange][:]
                                 inputted = ""
+                                if stage == Stage.PracticeBands or stage == Stage.PracticeLED:
+                                    newQuestion()
+                                else:
+                                    answer = None
                             elif stage == Stage.PracticeBands or stage == Stage.PracticeLED: # All selectable assets that don't change the stage will submit answers
-                                print("submit answer")
+                                if inputted == str(answer):
+                                    createNotif("Correct!", 2)
+                                else:
+                                    createNotif(f"Incorrect...\nCorrect Answer: {str(answer)}\nYour Answer: {inputted}", 2)
+                                inputted = ""
+                                newQuestion()
             elif i.type == pygame.KEYDOWN:
                 if stage == Stage.PracticeBands or stage == Stage.PracticeLED:
                     try:
                         int(i.unicode)
                         inputted += i.unicode
                         for i in assets:
-                            if i.zIndex == 2: # Text objects will have a zIndex of 2
+                            if i.zIndex == 2: # Input text objects will have a zIndex of 2
                                 assets.remove(i)
-                        assets.append(Asset(2, font.render(inputted, True, (0, 0, 0)), (0, 0), False))
+                        assets.append(Asset(2, answerText.render(inputted, True, (0, 0, 0)), (0, 0), False))
                         assets[-1].pos = (360 - assets[-1].instance.get_rect().size[0] / 2, 440 - assets[-1].instance.get_rect().size[1] / 2)
                     except:
                         if i.key == 13:
+                            if inputted == str(answer):
+                                createNotif("Correct!", 2)
+                            else:
+                                createNotif(f"Incorrect...\nCorrect Answer: {str(answer)}\nYour Answer: {inputted}", 2)
                             inputted = ""
-                            print("submit answer")
+                            newQuestion()
                         elif i.key == 8:
                             inputted = inputted[0:-1]
                             for i in assets:
                                 if i.zIndex == 2:
                                     assets.remove(i)
-                            assets.append(Asset(2, font.render(inputted, True, (0, 0, 0)), (0, 0), False))
+                            assets.append(Asset(2, answerText.render(inputted, True, (0, 0, 0)), (0, 0), False))
                             assets[-1].pos = (360 - assets[-1].instance.get_rect().size[0] / 2, 440 - assets[-1].instance.get_rect().size[1] / 2)
         # Rendering assets
         wn.fill((0, 0, 0))
