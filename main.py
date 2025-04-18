@@ -10,6 +10,7 @@ class Stage: # Allows me to reference what menu is being used easier
     MenuPractice = "__STAGE-MENU-PRACTICE__"
     PracticeBands = "__STAGE-PRACTICE-BANDS__"
     PracticeLED = "__STAGE-PRACTICE-LED__"
+    Quit = "__STAGE-QUIT__"
 Stage = Stage() # Removing the need to create a copy of the class every time it is used
 
 class Asset:
@@ -25,33 +26,48 @@ class Asset:
 pygame.init()
 clock = pygame.time.Clock()
 pygame.font.init()
-font = pygame.font.SysFont("Arial" ,24) # rename and change later (for various different text objects)
-wn = pygame.display.set_mode((500, 500)) # change later
+font = pygame.font.SysFont("Arial", 24) # rename and change later (for various different text objects)
+wn = pygame.display.set_mode((720, 720))
 stage = Stage.MenuMain
 
 stageAssets = {
     Stage.MenuMain : [
-        Asset(0, font.render("sample text", True, (0, 0, 0)), (0, 0), False),
-        Asset(0, pygame.image.load("assets/menus/startbtn.png").convert_alpha(), (125, 300), True, Stage.MenuLearn)
+        Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/menus/learnbtn.png").convert_alpha(), (160, 160), True, Stage.MenuLearn),
+        Asset(1, pygame.image.load("assets/menus/practicebtn.png").convert_alpha(), (160, 320), True, Stage.MenuPractice),
+        Asset(1, pygame.image.load("assets/menus/quitbtn.png").convert_alpha(), (160, 480), True, Stage.Quit)
     ],
     Stage.MenuLearn : [
-        Asset(0, font.render("EVIL sample text", True, (0, 0, 0)), (0, 0), False)
+        Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
+        Asset(0, pygame.image.load("assets/menus/learntxt.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/menus/bandsbtn.png").convert_alpha(), (160, 250), True, Stage.LearnBANDS),
+        Asset(1, pygame.image.load("assets/menus/ledbtn.png").convert_alpha(), (160, 390), True, Stage.LearnLED),
+        Asset(1, pygame.image.load("assets/menus/backbtn.png").convert_alpha(), (160, 530), True, Stage.MenuMain)
     ],
     Stage.LearnBANDS : [
-
+        Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/menus/backbtn.png").convert_alpha(), (160, 600), True, Stage.MenuLearn)
     ],
     Stage.LearnLED : [
-
+        Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/menus/backbtn.png").convert_alpha(), (160, 600), True, Stage.MenuLearn)
     ],
     Stage.MenuPractice : [
-
+        Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
+        Asset(0, pygame.image.load("assets/menus/practicetxt.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/menus/bandsbtn.png").convert_alpha(), (160, 250), True, Stage.PracticeBands),
+        Asset(1, pygame.image.load("assets/menus/ledbtn.png").convert_alpha(), (160, 390), True, Stage.PracticeLED),
+        Asset(1, pygame.image.load("assets/menus/backbtn.png").convert_alpha(), (160, 530), True, Stage.MenuMain)
     ],
     Stage.PracticeBands : [
-
+        Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/menus/backbtn.png").convert_alpha(), (160, 600), True, Stage.MenuPractice)
     ],
     Stage.PracticeLED : [
-
-    ]
+        Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/menus/backbtn.png").convert_alpha(), (160, 600), True, Stage.MenuPractice)
+    ],
+    Stage.Quit : []
 }
 assets = stageAssets[stage]
 
@@ -61,9 +77,38 @@ def checkSelected(asset):
     rect.y = asset.pos[1]
     return rect.collidepoint(pygame.mouse.get_pos())
 
-def createNotif(message):
-    assets.append(Asset(4, pygame.image.load("assets/menus/notifbg.png"), (0, 0), False, notifTimer=5)) # change time later?
-    assets.append(Asset(5, font.render(message, True, (0, 0, 0)), (0, 0), False, notifTimer=5))
+def createNotif(message, time):
+    assets.append(Asset(4, pygame.image.load("assets/menus/notifbg.png").convert_alpha(), (0, 0), False, notifTimer=time))
+    n = 0
+    for i in message.split("\n"):
+        assets.append(Asset(5, font.render(i, True, (0, 0, 0)), (0, 0), False, notifTimer=time)) # Position variable is a placeholder due to it being changed in the next line
+        assets[-1].pos = (225 - assets[-1].instance.get_rect().size[0] / 2, 50 - assets[-1].instance.get_rect().size[1] * len(message.split("\n")) / 2 + assets[-1].instance.get_rect().size[1] * n) # change if screen width / notifbg width changes
+        n += 1
+
+def generatePractice(type): # Generates practice questions
+    if type == Stage.PracticeBands: # Output format: (Question, Assets, Answer)
+        B_1 = random.randint(0, 9)
+        B_2 = random.randint(0, 9)
+        B_3 = random.randint(0, 9)
+        B_4 = random.randint(0, 9) if random.randint(0, 1) == 1 else 10 # Randomised between 4 and 5 band resistors
+        return (
+            "What is the resistance of this resistor, in Ohms? (Ignoring tolerance)",
+            [
+                Asset(3, pygame.image.load(f"assets/generate/band{str(B_1)}.png").convert_alpha(), (0, 0), False),
+                Asset(3, pygame.image.load(f"assets/generate/band{str(B_2)}.png").convert_alpha(), (0, 0), False),
+                Asset(3, pygame.image.load(f"assets/generate/band{str(B_3)}.png").convert_alpha(), (0, 0), False),
+                Asset(3, pygame.image.load(f"assets/generate/band{str(B_4)}.png").convert_alpha(), (0, 0), False)
+            ], # change zindex / pos later
+            int(str(B_1) + str(B_2)) * (pow(10, B_3)) if B_4 == 10 else int(str(B_1) + str(B_2) + str(B_3)) * (pow(10, B_4)) # Colour no. to multiplayer equation is 10^n
+        )
+    elif type == Stage.PracticeLED: # Output format: (Question, Answer)
+        V_s = [3, 5, 9, 12][random.randint(0, 3)]
+        V_f = [1, 1.5, 2, 2.5][random.randint(0, 3)]
+        I_f = [0.01, 0.02, 0.03][random.randint(0, 2)]
+        return (
+            f"What is the minimum required resistance for an LED with {V_f}V of forward voltage and {I_f}A of forward current in a circuit with {V_s}V supplied, in Ohms?",
+            (V_s - V_f) / I_f
+        )
 
 practiceData = { # Default data
     "BANDS": {
@@ -85,11 +130,17 @@ try:
 except Exception as err:
     saveData = False
     print(f"Error Code: '{err}'")
-    createNotif("There was an error in loading your data, any progress you make will not be saved (error code has been printed to the console)")
+    createNotif("There was an error in loading your data,\nany progress you make will not be saved\n(error code has been printed to the console)")
 
 def run(): # Putting the loop in a function allows it to be broken out of instantly
     global stage, assets # Removes errors with global vs local variables
     while True:
+        if stage == Stage.Quit:
+            if saveData:
+                data = open("data.txt", "w")
+                data.write(json.dumps(practiceData))
+                data.close()
+            return
         for i in pygame.event.get(): # Input
             if i.type == pygame.QUIT:
                 if saveData:
@@ -117,7 +168,7 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
                         elif i.key == 8:
                             print("remove number from answer")
         # Rendering assets
-        wn.fill((255, 255, 255))
+        wn.fill((0, 0, 0))
         renderList = {0:[],1:[],2:[],3:[],4:[],5:[]} # zIndex functionality
         cursor = pygame.SYSTEM_CURSOR_ARROW
         for i in assets:
