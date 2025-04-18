@@ -143,7 +143,7 @@ def newQuestion():
         n = 0
         for i in generate[0].split("\n"):
             assets.append(Asset(3, questionText.render(i, True, (0, 0, 0)), (0, 0), False))
-            assets[-1].pos = (360 - assets[-1].instance.get_rect().size[0] / 2, 205 - assets[-1].instance.get_rect().size[1] * len(generate[0].split("\n")) / 2 + assets[-1].instance.get_rect().size[1] * n) # change if screen width / notifbg width changes
+            assets[-1].pos = (360 - assets[-1].instance.get_rect().size[0] / 2, 205 - assets[-1].instance.get_rect().size[1] * len(generate[0].split("\n")) / 2 + assets[-1].instance.get_rect().size[1] * n)
             n += 1
         answer = generate[1]
 
