@@ -29,6 +29,8 @@ pygame.font.init()
 font = pygame.font.SysFont("Arial", 24) # rename and change later (for various different text objects)
 wn = pygame.display.set_mode((720, 720))
 stage = Stage.MenuMain
+inputted = ""
+answer = None
 
 stageAssets = {
     Stage.MenuMain : [
@@ -46,10 +48,12 @@ stageAssets = {
     ],
     Stage.LearnBands : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/slides/bands.png").convert_alpha(), (60, 72), False),
         Asset(1, pygame.image.load("assets/menus/lpbackbtn.png").convert_alpha(), (160, 600), True, Stage.MenuLearn)
     ],
     Stage.LearnLED : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/slides/led.png").convert_alpha(), (60, 72), False),
         Asset(1, pygame.image.load("assets/menus/lpbackbtn.png").convert_alpha(), (160, 600), True, Stage.MenuLearn)
     ],
     Stage.MenuPractice : [
@@ -61,15 +65,21 @@ stageAssets = {
     ],
     Stage.PracticeBands : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/generate/bandbg.png").convert_alpha(), (60, 40), False),
+        Asset(1, pygame.image.load("assets/menus/input.png").convert_alpha(), (110, 400), False),
+        Asset(1, pygame.image.load("assets/menus/submitbtn.png").convert_alpha(), (210, 490), True),
         Asset(1, pygame.image.load("assets/menus/lpbackbtn.png").convert_alpha(), (160, 600), True, Stage.MenuPractice)
     ],
     Stage.PracticeLED : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/generate/ledbg.png").convert_alpha(), (60, 40), False),
+        Asset(1, pygame.image.load("assets/menus/input.png").convert_alpha(), (110, 400), False),
+        Asset(1, pygame.image.load("assets/menus/submitbtn.png").convert_alpha(), (210, 490), True),
         Asset(1, pygame.image.load("assets/menus/lpbackbtn.png").convert_alpha(), (160, 600), True, Stage.MenuPractice)
     ],
     Stage.Quit : []
 }
-assets = stageAssets[stage]
+assets = stageAssets[stage][:] # "[:]" Creates a copy of the list instead of a reference, which is what I want
 
 def checkSelected(asset):
     rect = asset.instance.get_rect() # Creating a temporary pygame.rect object to use the in-built collision checks
@@ -95,11 +105,11 @@ def generatePractice(type): # Generates practice questions
         return (
             "What is the resistance of this resistor, in Ohms? (Ignoring tolerance)",
             [
-                Asset(3, pygame.image.load(f"assets/generate/band{str(B_1)}.png").convert_alpha(), (0, 0), False),
-                Asset(3, pygame.image.load(f"assets/generate/band{str(B_2)}.png").convert_alpha(), (0, 0), False),
-                Asset(3, pygame.image.load(f"assets/generate/band{str(B_3)}.png").convert_alpha(), (0, 0), False),
-                Asset(3, pygame.image.load(f"assets/generate/band{str(B_4)}.png").convert_alpha(), (0, 0), False)
-            ], # change zindex / pos later
+                Asset(3, pygame.image.load(f"assets/generate/band{str(B_1)}.png").convert_alpha(), (230, 180), False),
+                Asset(3, pygame.image.load(f"assets/generate/band{str(B_2)}.png").convert_alpha(), (280, 180), False),
+                Asset(3, pygame.image.load(f"assets/generate/band{str(B_3)}.png").convert_alpha(), (330, 180), False),
+                Asset(3, pygame.image.load(f"assets/generate/band{str(B_4)}.png").convert_alpha(), (380, 180), False)
+            ],
             int(str(B_1) + str(B_2)) * (pow(10, B_3)) if B_n == 0 else int(str(B_1) + str(B_2) + str(B_3)) * (pow(10, B_4)) # Colour no. to multiplayer equation is 10^n
         )
     elif type == Stage.PracticeLED: # Output format: (Question, Answer)
@@ -110,7 +120,7 @@ def generatePractice(type): # Generates practice questions
             f"What is the minimum required resistance for an LED with {V_f}V of forward voltage and {I_f}A of forward current in a circuit with {V_s}V supplied, in Ohms?",
             (V_s - V_f) / I_f
         )
-print(generatePractice(Stage.PracticeBands))
+
 practiceData = { # Default data
     "BANDS": {
         "CORRECT": 0,
@@ -134,7 +144,7 @@ except Exception as err:
     createNotif("There was an error in loading your data,\nany progress you make will not be saved\n(error code has been printed to the console)")
 
 def run(): # Putting the loop in a function allows it to be broken out of instantly
-    global stage, assets # Removes errors with global vs local variables
+    global stage, assets, inputted, answer # Removes errors with global vs local variables
     while True:
         if stage == Stage.Quit:
             if saveData:
@@ -155,19 +165,31 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
                         if i.selectable and checkSelected(i):
                             if i.stageChange:
                                 stage = i.stageChange
-                                assets = stageAssets[i.stageChange]
+                                assets = stageAssets[i.stageChange][:]
+                                inputted = ""
                             elif stage == Stage.PracticeBands or stage == Stage.PracticeLED: # All selectable assets that don't change the stage will submit answers
                                 print("submit answer")
             elif i.type == pygame.KEYDOWN:
                 if stage == Stage.PracticeBands or stage == Stage.PracticeLED:
                     try:
-                        key = int(i.unicode)
-                        print("add number to answer")
+                        int(i.unicode)
+                        inputted += i.unicode
+                        for i in assets:
+                            if i.zIndex == 2: # Text objects will have a zIndex of 2
+                                assets.remove(i)
+                        assets.append(Asset(2, font.render(inputted, True, (0, 0, 0)), (0, 0), False))
+                        assets[-1].pos = (360 - assets[-1].instance.get_rect().size[0] / 2, 440 - assets[-1].instance.get_rect().size[1] / 2)
                     except:
                         if i.key == 13:
+                            inputted = ""
                             print("submit answer")
                         elif i.key == 8:
-                            print("remove number from answer")
+                            inputted = inputted[0:-1]
+                            for i in assets:
+                                if i.zIndex == 2:
+                                    assets.remove(i)
+                            assets.append(Asset(2, font.render(inputted, True, (0, 0, 0)), (0, 0), False))
+                            assets[-1].pos = (360 - assets[-1].instance.get_rect().size[0] / 2, 440 - assets[-1].instance.get_rect().size[1] / 2)
         # Rendering assets
         wn.fill((0, 0, 0))
         renderList = {0:[],1:[],2:[],3:[],4:[],5:[]} # zIndex functionality
