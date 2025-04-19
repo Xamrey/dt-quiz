@@ -10,6 +10,7 @@ class Stage: # Allows me to reference what menu is being used easier
     MenuPractice = "__STAGE-MENU-PRACTICE__"
     PracticeBands = "__STAGE-PRACTICE-BANDS__"
     PracticeLED = "__STAGE-PRACTICE-LED__"
+    Stats = "__STAGE-STATS__"
     Quit = "__STAGE-QUIT__"
 Stage = Stage() # Removing the need to create a copy of the class every time it is used
 
@@ -29,7 +30,9 @@ pygame.font.init()
 notifText = pygame.font.SysFont("Arial", 40)
 questionText = pygame.font.SysFont("Arial", 30)
 answerText = pygame.font.SysFont("Arial", 35)
+statsText = pygame.font.SysFont("Arial", 30)
 wn = pygame.display.set_mode((720, 720))
+pygame.display.set_caption("DT Resistors Quiz")
 stage = Stage.MenuMain
 inputted = ""
 answer = None
@@ -37,9 +40,10 @@ answer = None
 stageAssets = {
     Stage.MenuMain : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
-        Asset(1, pygame.image.load("assets/menus/learnbtn.png").convert_alpha(), (160, 160), True, Stage.MenuLearn),
-        Asset(1, pygame.image.load("assets/menus/practicebtn.png").convert_alpha(), (160, 320), True, Stage.MenuPractice),
-        Asset(1, pygame.image.load("assets/menus/quitbtn.png").convert_alpha(), (160, 480), True, Stage.Quit)
+        Asset(1, pygame.image.load("assets/menus/learnbtn.png").convert_alpha(), (160, 140), True, Stage.MenuLearn),
+        Asset(1, pygame.image.load("assets/menus/practicebtn.png").convert_alpha(), (160, 260), True, Stage.MenuPractice),
+        Asset(1, pygame.image.load("assets/menus/statsbtn.png").convert_alpha(), (160, 380), True, Stage.Stats),
+        Asset(1, pygame.image.load("assets/menus/quitbtn.png").convert_alpha(), (160, 500), True, Stage.Quit)
     ],
     Stage.MenuLearn : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
@@ -78,6 +82,13 @@ stageAssets = {
         Asset(1, pygame.image.load("assets/menus/input.png").convert_alpha(), (110, 400), False),
         Asset(1, pygame.image.load("assets/menus/submitbtn.png").convert_alpha(), (210, 490), True),
         Asset(1, pygame.image.load("assets/menus/lpbackbtn.png").convert_alpha(), (160, 600), True, Stage.MenuPractice)
+    ],
+    Stage.Stats : [
+        Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
+        Asset(1, pygame.image.load("assets/menus/statstxt.png").convert_alpha(), (0, 0), True),
+        Asset(1, pygame.image.load("assets/menus/statsbg.png").convert_alpha(), (110, 200), False),
+        Asset(1, pygame.image.load("assets/menus/resetbtn.png").convert_alpha(), (260, 455), True),
+        Asset(1, pygame.image.load("assets/menus/menubackbtn.png").convert_alpha(), (160, 530), True, Stage.MenuMain)
     ],
     Stage.Quit : []
 }
@@ -147,14 +158,34 @@ def newQuestion():
             n += 1
         answer = generate[1]
 
+def updateStats():
+    toRemove = []
+    for i in assets:
+        if i.zIndex == 2:
+            toRemove.append(i)
+    for i in toRemove:
+        assets.remove(i)
+    assets.append(Asset(2, statsText.render(str(practiceData["__STAGE-PRACTICE-BANDS__"]["CORRECT"]), (0, 0, 0), True), (0, 0), False))
+    assets[-1].pos = (340 - assets[-1].instance.get_rect().size[0], 293 - assets[-1].instance.get_rect().size[1])
+    assets.append(Asset(2, statsText.render(str(practiceData["__STAGE-PRACTICE-BANDS__"]["INCORRECT"]), (0, 0, 0), True), (0, 0), False))
+    assets[-1].pos = (340 - assets[-1].instance.get_rect().size[0], 343 - assets[-1].instance.get_rect().size[1])
+    assets.append(Asset(2, statsText.render(str(max(1, practiceData["__STAGE-PRACTICE-BANDS__"]["CORRECT"]) / max(1, practiceData["__STAGE-PRACTICE-BANDS__"]["INCORRECT"])), (0, 0, 0), True), (0, 0), False))
+    assets[-1].pos = (340 - assets[-1].instance.get_rect().size[0], 393 - assets[-1].instance.get_rect().size[1])
+    assets.append(Asset(2, statsText.render(str(practiceData["__STAGE-PRACTICE-LED__"]["CORRECT"]), (0, 0, 0), True), (0, 0), False))
+    assets[-1].pos = (590 - assets[-1].instance.get_rect().size[0], 293 - assets[-1].instance.get_rect().size[1])
+    assets.append(Asset(2, statsText.render(str(practiceData["__STAGE-PRACTICE-LED__"]["INCORRECT"]), (0, 0, 0), True), (0, 0), False))
+    assets[-1].pos = (590 - assets[-1].instance.get_rect().size[0], 343 - assets[-1].instance.get_rect().size[1])
+    assets.append(Asset(2, statsText.render(str(max(1, practiceData["__STAGE-PRACTICE-LED__"]["CORRECT"]) / max(1, practiceData["__STAGE-PRACTICE-LED__"]["INCORRECT"])), (0, 0, 0), True), (0, 0), False))
+    assets[-1].pos = (590 - assets[-1].instance.get_rect().size[0], 393 - assets[-1].instance.get_rect().size[1])
+
 practiceData = { # Default data
-    "BANDS": {
-        "CORRECT": 0,
-        "INCORRECT": 0
+    "__STAGE-PRACTICE-BANDS__" : {
+        "CORRECT" : 0,
+        "INCORRECT" : 0
     },
-    "LED": {
-        "CORRECT": 0,
-        "INCORRECT": 0
+    "__STAGE-PRACTICE-LED__" : {
+        "CORRECT" : 0,
+        "INCORRECT" : 0
     }
 }
 
@@ -170,20 +201,12 @@ except Exception as err:
     createNotif("There was an error in loading your data,\nany progress you make will not be saved\n(error code has been printed to the console)", 5)
 
 def run(): # Putting the loop in a function allows it to be broken out of instantly
-    global stage, assets, inputted, answer # Removes errors with global vs local variables
+    global stage, assets, inputted, answer, practiceData # Removes errors with global vs local variables
     while True:
         if stage == Stage.Quit:
-            if saveData:
-                data = open("data.txt", "w")
-                data.write(json.dumps(practiceData))
-                data.close()
             return
         for i in pygame.event.get(): # Input
             if i.type == pygame.QUIT:
-                if saveData:
-                    data = open("data.txt", "w")
-                    data.write(json.dumps(practiceData))
-                    data.close()
                 return
             elif i.type == pygame.MOUSEBUTTONDOWN:
                 if i.button == 1:
@@ -197,13 +220,20 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
                                     newQuestion()
                                 else:
                                     answer = None
-                            elif stage == Stage.PracticeBands or stage == Stage.PracticeLED: # All selectable assets that don't change the stage will submit answers
+                                    if stage == Stage.Stats:
+                                        updateStats()
+                            elif stage == Stage.PracticeBands or stage == Stage.PracticeLED: # All selectable assets that don't change the stage will submit answers or reset stats
                                 if inputted == str(answer):
+                                    practiceData[stage]["CORRECT"] += 1
                                     createNotif("Correct!", 2)
                                 else:
+                                    practiceData[stage]["INCORRECT"] += 1
                                     createNotif(f"Incorrect...\nCorrect Answer: {str(answer)}\nYour Answer: {inputted}", 2)
                                 inputted = ""
                                 newQuestion()
+                            elif stage == Stage.Stats:
+                                practiceData = {"__STAGE-PRACTICE-BANDS__":{"CORRECT":0,"INCORRECT":0},"__STAGE-PRACTICE-LED__":{"CORRECT":0,"INCORRECT":0}}
+                                updateStats()
             elif i.type == pygame.KEYDOWN:
                 if stage == Stage.PracticeBands or stage == Stage.PracticeLED:
                     try:
@@ -217,8 +247,10 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
                     except:
                         if i.key == 13:
                             if inputted == str(answer):
+                                practiceData[stage]["CORRECT"] += 1
                                 createNotif("Correct!", 2)
                             else:
+                                practiceData[stage]["INCORRECT"] += 1
                                 createNotif(f"Incorrect...\nCorrect Answer: {str(answer)}\nYour Answer: {inputted}", 2)
                             inputted = ""
                             newQuestion()
@@ -251,5 +283,9 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
         clock.tick(24) # Caps FPS at 24 so that timers can work correctly
 
 run()
+if saveData:
+    data = open("data.txt", "w")
+    data.write(json.dumps(practiceData))
+    data.close()
 pygame.quit()
 pygame.font.quit()
