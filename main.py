@@ -85,7 +85,7 @@ stageAssets = { # Constants for what assets are in each stage (page) by default
     ],
     Stage.Stats : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
-        Asset(1, pygame.image.load("assets/menus/statstxt.png").convert_alpha(), (0, 0), True),
+        Asset(1, pygame.image.load("assets/menus/statstxt.png").convert_alpha(), (0, 0), False),
         Asset(1, pygame.image.load("assets/menus/statsbg.png").convert_alpha(), (110, 200), False),
         Asset(1, pygame.image.load("assets/menus/resetbtn.png").convert_alpha(), (260, 455), True),
         Asset(1, pygame.image.load("assets/menus/menubackbtn.png").convert_alpha(), (160, 530), True, Stage.MenuMain)
