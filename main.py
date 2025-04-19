@@ -30,14 +30,14 @@ pygame.font.init()
 notifText = pygame.font.SysFont("Arial", 40)
 questionText = pygame.font.SysFont("Arial", 30)
 answerText = pygame.font.SysFont("Arial", 35)
-statsText = pygame.font.SysFont("Arial", 30)
+statsText = pygame.font.SysFont("Arial", 30) # Even though this font is identical to questionText, keeping them as separate variables makes them easier to code in
 wn = pygame.display.set_mode((720, 720))
-pygame.display.set_caption("DT Resistors Quiz")
+pygame.display.set_caption("DT Resistors Quiz") # I don't know what to call it, this is the best I can think of
 stage = Stage.MenuMain
-inputted = ""
+inputted = "" # Current input for practice questions
 answer = None
 
-stageAssets = {
+stageAssets = { # Constants for what assets are in each stage (page) by default
     Stage.MenuMain : [
         Asset(0, pygame.image.load("assets/menus/background.png").convert_alpha(), (0, 0), False),
         Asset(1, pygame.image.load("assets/menus/learnbtn.png").convert_alpha(), (160, 140), True, Stage.MenuLearn),
@@ -94,16 +94,16 @@ stageAssets = {
 }
 assets = stageAssets[stage][:] # "[:]" Creates a copy of the list instead of a reference, which is what I want
 
-def checkSelected(asset):
+def checkSelected(asset): # Checking if an asset is being hovered over by the mouse
     rect = asset.instance.get_rect() # Creating a temporary pygame.rect object to use the in-built collision checks
     rect.x = asset.pos[0]
     rect.y = asset.pos[1]
     return rect.collidepoint(pygame.mouse.get_pos())
 
-def createNotif(message, time):
+def createNotif(message, time): # Notifications for answers to practice questions, or if there are errors with save data
     assets.append(Asset(4, pygame.image.load("assets/menus/notifbg.png").convert_alpha(), (0, 0), False, notifTimer=time))
     n = 0
-    for i in message.split("\n"):
+    for i in message.split("\n"): # Multi-line text
         assets.append(Asset(5, notifText.render(i, True, (255, 255, 255)), (0, 0), False, notifTimer=time)) # Position variable is a placeholder due to it being changed in the next line
         assets[-1].pos = (360 - assets[-1].instance.get_rect().size[0] / 2, 100 - assets[-1].instance.get_rect().size[1] * len(message.split("\n")) / 2 + assets[-1].instance.get_rect().size[1] * n)
         n += 1
@@ -130,13 +130,13 @@ def generatePractice(type): # Generates practice questions
         V_f = [1, 1.5, 2, 2.5][random.randint(0, 3)]
         I_f = [0.01, 0.02, 0.03][random.randint(0, 2)]
         return (
-            f"What is the minimum required resistance for an LED\nwith {V_f}V of forward voltage and {I_f}A of forward\ncurrent in a circuit with {V_s}V supplied, in Ohms?",
-            int((V_s - V_f) / I_f)
+            f"What is the minimum required resistance for\nan LED with {V_f}V of forward voltage and {I_f}A\nof forward current in a circuit with {V_s}V\nsupplied, in Ohms? (Rounded down)",
+            int((V_s - V_f) / I_f) # int() automatically rounds it down
         )
 
-def newQuestion():
+def newQuestion(): # Renders practice questions on the screen
     global answer
-    toRemove = []
+    toRemove = [] # Editing the assets list while still using it causes some assets to not be removed
     for i in assets:
         if i.zIndex == 2 or i.zIndex == 3:
             toRemove.append(i)
@@ -236,7 +236,7 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
                                 updateStats()
             elif i.type == pygame.KEYDOWN:
                 if stage == Stage.PracticeBands or stage == Stage.PracticeLED:
-                    try:
+                    try: # Checking if the input is a number, then either adding it to the input or checking for enter / backspace
                         int(i.unicode)
                         inputted += i.unicode
                         for i in assets:
@@ -245,7 +245,7 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
                         assets.append(Asset(2, answerText.render(inputted, True, (0, 0, 0)), (0, 0), False))
                         assets[-1].pos = (360 - assets[-1].instance.get_rect().size[0] / 2, 440 - assets[-1].instance.get_rect().size[1] / 2)
                     except:
-                        if i.key == 13:
+                        if i.key == 13: # Keycode for enter
                             if inputted == str(answer):
                                 practiceData[stage]["CORRECT"] += 1
                                 createNotif("Correct!", 2)
@@ -254,7 +254,7 @@ def run(): # Putting the loop in a function allows it to be broken out of instan
                                 createNotif(f"Incorrect...\nCorrect Answer: {str(answer)}\nYour Answer: {inputted}", 2)
                             inputted = ""
                             newQuestion()
-                        elif i.key == 8:
+                        elif i.key == 8: # Keycode for backspace
                             inputted = inputted[0:-1]
                             for i in assets:
                                 if i.zIndex == 2:
